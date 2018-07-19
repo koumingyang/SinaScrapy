@@ -40,33 +40,30 @@ class ResponseNotWorkMiddleware(object):
         self.proxies = self.db["proxies"]
 
     def process_response(self, request, response, spider):  
-        if response.status != 200:  
-            logger = logging.getLogger(__name__)
-            logger.warning('process_response...')
-            self.get()
-            sleep(2)
-            proxy = self.get_random_proxy()  
-            print("this is request ip:"+proxy)  
-            request.meta['proxy'] = proxy
-            request.dont_filter=True
-            return request
         return response
 
     def process_exception(self, request, exception, spider):
         logger = logging.getLogger(__name__)
-        logger.warning('process_exception...')
+        logger.warning('Not Work process_exception...')
+        logger.warning(exception)
+
+        if ('User timeout caused' in str(exception)):
+            sleep(20)
+            return request
+
         self.get()
-        sleep(2)
+        sleep(20)
         proxy = self.get_random_proxy()  
-        print("this is request ip:"+proxy)  
+        print("Not Work this is request ip:"+proxy)  
         request.meta['proxy'] = proxy
         request.dont_filter=True
+        logger.warning('Not Work over!')
         return request
     
     def get(self):
         while(True):
             try:
-                r = requests.get("http://api.xdaili.cn/xdaili-api//privateProxy/getDynamicIP/DD20187195466ArkBQ1/03e20a3d1ddb11e79ff07cd30abda612?returnType=2",
+                r = requests.get("http://api.xdaili.cn/xdaili-api//privateProxy/getDynamicIP/DD20187195466ArkBQ1/c711f5747db611e7bcaf7cd30abda612?returnType=2",
                         timeout=120)
             except Exception as err_info:
                 r = None
@@ -110,7 +107,7 @@ class DynamicProxyMiddleware(object):
     def get(self):
         while(True):
             try:
-                r = requests.get("http://api.xdaili.cn/xdaili-api//privateProxy/getDynamicIP/DD20187195466ArkBQ1/03e20a3d1ddb11e79ff07cd30abda612?returnType=2",
+                r = requests.get("http://api.xdaili.cn/xdaili-api//privateProxy/getDynamicIP/DD20187195466ArkBQ1/c711f5747db611e7bcaf7cd30abda612?returnType=2",
                         timeout=120)
             except Exception as err_info:
                 r = None
@@ -134,32 +131,18 @@ class DynamicProxyMiddleware(object):
             sleep(60)
 
     def get_random_proxy(self):  
-        '''随机从文件中读取proxy'''  
         while(True):
             for proxy in self.proxies.find():
                 return proxy['proxy']
-            sleep(1)
+            sleep(10)
 
-    def process_request(self,request, spider):  
-        '''对request对象加上proxy'''  
+    def process_request(self,request, spider):    
         proxy = self.get_random_proxy()  
-        print("this is request ip:"+proxy)  
+        print("DP this is request ip:"+proxy)  
         request.meta['proxy'] = proxy   
   
   
     def process_response(self, request, response, spider):  
-        '''对返回的response处理'''  
-        # 如果返回的response状态不是200，重新生成当前request对象  
-        if response.status != 200:  
-            print("Dynamic response")
-            self.get()
-            sleep(2)
-
-            proxy = self.get_random_proxy()  
-            print("this is response ip:"+proxy)  
-            # 对当前reque加上代理  
-            request.meta['proxy'] = proxy   
-            return request  
         return response  
 
         

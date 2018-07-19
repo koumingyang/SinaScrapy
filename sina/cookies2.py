@@ -18,37 +18,8 @@ from selenium.webdriver.support import expected_conditions as EC
 或者你也可以把时间间隔调大点。
 """
 WeiBoAccounts = [
-{'username': '18810231801', 'password': 'kmy97226'},
-{'username': '15010863096', 'password': 'kmy972261001'},
-{'username': '00841688839272', 'password': 'cxz7223'},
-{'username': '00841677339592', 'password': 'cxz9291'},
-{'username': '00841218495387', 'password': 'cxz4628'},
-{'username': '00841219726762', 'password': 'cxz8664'},
-{'username': '00841218920656', 'password': 'cxz8946'},
-{'username': '00841635302577', 'password': 'cxz6113'},
-{'username': '00841674856850', 'password': 'cxz2763'},
-{'username': '00841218910265', 'password': 'cxz3769'},
-{'username': '00841218368385', 'password': 'cxz8835'},
-{'username': '00639460688853', 'password': 'hn7xe426fx'},
-{'username': '00639460679796', 'password': '7a1id6lez5'},
-{'username': '00639460679794', 'password': 'rhuk8alcx5'},
-{'username': '00639460679793', 'password': 'ymvi1zvtdc'},
-{'username': '00639460679699', 'password': '9l0id05yzi'},
-{'username': '00639460679695', 'password': 'x0sh32ciyn'},
-{'username': '00639460679693', 'password': 'rn56vd0veq'},
-{'username': '00639460679692', 'password': 'r8t784rp61'},
-{'username': '00639460679688', 'password': 'a1kndvzk8l'},
 {'username': '00639460679687', 'password': 'rqli9psh5d'},
-{'username': '00639460679684', 'password': 'vwr6e0r3w9'},
-{'username': '00639460679682', 'password': 'spcg7adjlz'},
-{'username': '00639460679659', 'password': '4n1pvy2jx6'},
-{'username': '00639460678909', 'password': 'otld46ymv0'},
-{'username': '00639460678822', 'password': '25z8mj3108'},
-{'username': '00639460678821', 'password': 'rhn41m5s3j'},
-{'username': '00639460678820', 'password': 'cylk8y034t'},
 {'username': '00639460672258', 'password': 'lw34apdre5'},
-{'username': '00639460672256', 'password': 'vo5fmuqx69'},
-{'username': '00841299901253', 'password': 'fif74341'},
 ]
 
 
