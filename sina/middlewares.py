@@ -52,7 +52,7 @@ class ResponseNotWorkMiddleware(object):
             return request
 
         self.get()
-        sleep(20)
+        sleep(30)
         proxy = self.get_random_proxy()  
         print("Not Work this is request ip:"+proxy)  
         request.meta['proxy'] = proxy
