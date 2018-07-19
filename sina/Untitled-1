@@ -1,0 +1,52 @@
+https://117.57.91.163:26802
+
+
+class MyRetryMiddleware(RetryMiddleware):
+    logger = logging.getLogger(__name__)
+
+    def get(self):
+        try:
+            r = requests.get("http://api.xdaili.cn/xdaili-api//privateProxy/getDynamicIP/DD20187195466ArkBQ1/03e20a3d1ddb11e79ff07cd30abda612?returnType=2",
+                    timeout=120)
+        except Exception as err_info:
+            r = None
+            print(err_info)
+
+        with open('/home/kmy/WeiboSpider-master/proxies.txt', 'w') as f:
+            if r is not None:
+                print(r.status_code)
+                if r.status_code == 200:
+                    print(r.content)
+                    print(r.json())
+                    result = r.json()
+                    if result["ERRORCODE"] == "0" and result["RESULT"]:
+                        one = result["RESULT"]
+                        print(one)
+                        print(one["proxyport"])
+                        print(one["wanIp"])
+                        ip = "https://" + one["wanIp"] + ":" + one["proxyport"] + "\n"
+                        f.write(ip)
+
+
+    def process_response(self, request, response, spider):
+        if request.meta.get('dont_retry', False):
+            return response
+        if response.status in self.retry_http_codes:
+            reason = response_status_message(response.status)
+            # 删除该代理
+            self.get()
+            time.sleep(random.randint(3, 5))
+            self.logger.warning('返回值异常, 进行重试...')
+            return self._retry(request, reason, spider) or response
+        return response
+
+
+    def process_exception(self, request, exception, spider):
+        if isinstance(exception, self.EXCEPTIONS_TO_RETRY) \
+                and not request.meta.get('dont_retry', False):
+            # 删除该代理
+            self.get()
+            time.sleep(random.randint(3, 5))
+            self.logger.warning('连接异常, 进行重试...')
+
+            return self._retry(request, exception, spider)
