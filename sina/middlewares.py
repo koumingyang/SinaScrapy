@@ -6,6 +6,7 @@ from sina.user_agents import agents
 from redis import StrictRedis
 from time import sleep
 import requests
+import pymongo
 
 import logging
 from logging.handlers import RotatingFileHandler
@@ -33,6 +34,11 @@ class CookiesMiddleware(object):
 
 class ResponseNotWorkMiddleware(object):
     
+    def __init__(self):
+        self.client = pymongo.MongoClient("localhost", 27017)
+        self.db = self.client["Sina"]
+        self.proxies = self.db["proxies"]
+
     def process_response(self, request, response, spider):  
         if response.status != 200:  
             logger = logging.getLogger(__name__)
@@ -58,14 +64,14 @@ class ResponseNotWorkMiddleware(object):
         return request
     
     def get(self):
-        try:
-            r = requests.get("http://api.xdaili.cn/xdaili-api//privateProxy/getDynamicIP/DD20187195466ArkBQ1/03e20a3d1ddb11e79ff07cd30abda612?returnType=2",
-                    timeout=120)
-        except Exception as err_info:
-            r = None
-            print(err_info)
+        while(True):
+            try:
+                r = requests.get("http://api.xdaili.cn/xdaili-api//privateProxy/getDynamicIP/DD20187195466ArkBQ1/03e20a3d1ddb11e79ff07cd30abda612?returnType=2",
+                        timeout=120)
+            except Exception as err_info:
+                r = None
+                print(err_info)
 
-        with open('/home/kmy/WeiboSpider-master/proxies.txt', 'w') as f:
             if r is not None:
                 print(r.status_code)
                 if r.status_code == 200:
@@ -77,36 +83,39 @@ class ResponseNotWorkMiddleware(object):
                         print(one)
                         print(one["proxyport"])
                         print(one["wanIp"])
-                        ip = "https://" + one["wanIp"] + ":" + one["proxyport"] + "\n"
-                        f.write(ip)
+                        ip = "https://" + one["wanIp"] + ":" + one["proxyport"]
+                        self.proxies.drop()
+                        self.proxies.insert_one({"proxy": ip})
+                        return
+            sleep(60)
+
 
     def get_random_proxy(self):  
         '''随机从文件中读取proxy'''  
-        while 1:  
-            with open('/home/kmy/WeiboSpider-master/proxies.txt', 'r') as f:  
-                proxies = f.readlines()  
-            if proxies:  
-                break  
-            else:  
-                time.sleep(1)  
-        proxy = random.choice(proxies).strip()  
-        return proxy
+        while(True):
+            for proxy in self.proxies.find():
+                return proxy['proxy']
+            sleep(1)
+        
 
 
 class DynamicProxyMiddleware(object):
 
     def __init__(self):
-        pass
+        self.client = pymongo.MongoClient("localhost", 27017)
+        self.db = self.client["Sina"]
+        self.proxies = self.db["proxies"]
+        self.get()
 
     def get(self):
-        try:
-            r = requests.get("http://api.xdaili.cn/xdaili-api//privateProxy/getDynamicIP/DD20187195466ArkBQ1/03e20a3d1ddb11e79ff07cd30abda612?returnType=2",
-                    timeout=120)
-        except Exception as err_info:
-            r = None
-            print(err_info)
+        while(True):
+            try:
+                r = requests.get("http://api.xdaili.cn/xdaili-api//privateProxy/getDynamicIP/DD20187195466ArkBQ1/03e20a3d1ddb11e79ff07cd30abda612?returnType=2",
+                        timeout=120)
+            except Exception as err_info:
+                r = None
+                print(err_info)
 
-        with open('/home/kmy/WeiboSpider-master/proxies.txt', 'w') as f:
             if r is not None:
                 print(r.status_code)
                 if r.status_code == 200:
@@ -118,8 +127,18 @@ class DynamicProxyMiddleware(object):
                         print(one)
                         print(one["proxyport"])
                         print(one["wanIp"])
-                        ip = "https://" + one["wanIp"] + ":" + one["proxyport"] + "\n"
-                        f.write(ip)
+                        ip = "https://" + one["wanIp"] + ":" + one["proxyport"]
+                        self.proxies.drop()
+                        self.proxies.insert_one({"proxy": ip})
+                        return
+            sleep(60)
+
+    def get_random_proxy(self):  
+        '''随机从文件中读取proxy'''  
+        while(True):
+            for proxy in self.proxies.find():
+                return proxy['proxy']
+            sleep(1)
 
     def process_request(self,request, spider):  
         '''对request对象加上proxy'''  
@@ -142,17 +161,6 @@ class DynamicProxyMiddleware(object):
             request.meta['proxy'] = proxy   
             return request  
         return response  
-  
-    def get_random_proxy(self):  
-        '''随机从文件中读取proxy'''  
-        while 1:  
-            with open('/home/kmy/WeiboSpider-master/proxies.txt', 'r') as f:  
-                proxies = f.readlines()  
-            if proxies:  
-                break  
-            else:  
-                time.sleep(1)  
-        proxy = random.choice(proxies).strip()  
-        return proxy
+
         
 
