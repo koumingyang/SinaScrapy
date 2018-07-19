@@ -31,6 +31,68 @@ class CookiesMiddleware(object):
         cookie = random.choice(cookies)
         request.cookies = cookie
 
+class ResponseNotWorkMiddleware(object):
+    
+    def process_response(self, request, response, spider):  
+        if response.status != 200:  
+            logger = logging.getLogger(__name__)
+            logger.warning('process_response...')
+            self.get()
+            sleep(2)
+            proxy = self.get_random_proxy()  
+            print("this is request ip:"+proxy)  
+            request.meta['proxy'] = proxy
+            request.dont_filter=True
+            return request
+        return response
+
+    def process_exception(self, request, exception, spider):
+        logger = logging.getLogger(__name__)
+        logger.warning('process_exception...')
+        self.get()
+        sleep(2)
+        proxy = self.get_random_proxy()  
+        print("this is request ip:"+proxy)  
+        request.meta['proxy'] = proxy
+        request.dont_filter=True
+        return request
+    
+    def get(self):
+        try:
+            r = requests.get("http://api.xdaili.cn/xdaili-api//privateProxy/getDynamicIP/DD20187195466ArkBQ1/03e20a3d1ddb11e79ff07cd30abda612?returnType=2",
+                    timeout=120)
+        except Exception as err_info:
+            r = None
+            print(err_info)
+
+        with open('/home/kmy/WeiboSpider-master/proxies.txt', 'w') as f:
+            if r is not None:
+                print(r.status_code)
+                if r.status_code == 200:
+                    print(r.content)
+                    print(r.json())
+                    result = r.json()
+                    if result["ERRORCODE"] == "0" and result["RESULT"]:
+                        one = result["RESULT"]
+                        print(one)
+                        print(one["proxyport"])
+                        print(one["wanIp"])
+                        ip = "https://" + one["wanIp"] + ":" + one["proxyport"] + "\n"
+                        f.write(ip)
+
+    def get_random_proxy(self):  
+        '''随机从文件中读取proxy'''  
+        while 1:  
+            with open('/home/kmy/WeiboSpider-master/proxies.txt', 'r') as f:  
+                proxies = f.readlines()  
+            if proxies:  
+                break  
+            else:  
+                time.sleep(1)  
+        proxy = random.choice(proxies).strip()  
+        return proxy
+
+
 class DynamicProxyMiddleware(object):
 
     def __init__(self):

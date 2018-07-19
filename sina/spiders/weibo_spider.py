@@ -41,6 +41,9 @@ class Spider(Spider):
             url = re.findall('互联网;?[：:]?(.*?);', text1)
 
             informationItem["_id"] = ID
+            informationItem["Num_Tweets"] = 0
+            informationItem["Num_Follows"] = 0
+            informationItem["Num_Fans"] = 0
             if nickname and nickname[0]:
                 informationItem["NickName"] = nickname[0].replace(u"\xa0", "")
             if gender and gender[0]:
@@ -85,6 +88,8 @@ class Spider(Spider):
                         num_tweets = re.findall('微博\[(\d+)\]', texts)
                         num_follows = re.findall('关注\[(\d+)\]', texts)
                         num_fans = re.findall('粉丝\[(\d+)\]', texts)
+
+
                         if num_tweets:
                             informationItem["Num_Tweets"] = int(num_tweets[0])
                         if num_follows:

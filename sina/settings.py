@@ -39,9 +39,6 @@ DOWNLOAD_DELAY = 0.5
 
 # Enable or disable spider middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
-# SPIDER_MIDDLEWARES = {
-#    'sina.middlewares.SinaSpiderMiddleware': 543,
-# }
 
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
@@ -49,7 +46,8 @@ DOWNLOADER_MIDDLEWARES = {
     'sina.middlewares.UserAgentMiddleware': 401,
     'sina.middlewares.CookiesMiddleware': 402,
     'sina.middlewares.DynamicProxyMiddleware': 120,  
-    #'sina.middlewares.MyRetryMiddleware': 520,  
+    'sina.middlewares.ResponseNotWorkMiddleware': 543,
+    'scrapy.downloadermiddlewares.retry.RetryMiddleware':None,
 }
 
 # Enable or disable extensions
