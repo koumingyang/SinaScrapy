@@ -50,3 +50,33 @@ class MyRetryMiddleware(RetryMiddleware):
             self.logger.warning('连接异常, 进行重试...')
 
             return self._retry(request, exception, spider)
+
+
+
+
+
+def get(self):
+        while(True):
+            try:
+                r = requests.get("http://api.xdaili.cn/xdaili-api//privateProxy/getDynamicIP/DD20187195466ArkBQ1/204bcf3349f011e8bcaf7cd30abda612?returnType=2",
+                        timeout=120)
+            except Exception as err_info:
+                r = None
+                print(err_info)
+
+            if r is not None:
+                print(r.status_code)
+                if r.status_code == 200:
+                    print(r.content)
+                    print(r.json())
+                    result = r.json()
+                    if result["ERRORCODE"] == "0" and result["RESULT"]:
+                        one = result["RESULT"]
+                        print(one)
+                        print(one["proxyport"])
+                        print(one["wanIp"])
+                        ip = "https://" + one["wanIp"] + ":" + one["proxyport"]
+                        self.proxies.drop()
+                        self.proxies.insert_one({"proxy": ip})
+                        return
+            sleep(60)

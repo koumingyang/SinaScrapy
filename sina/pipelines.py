@@ -6,7 +6,7 @@
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 import pymongo
 
-from sina.items import RelationshipsItem, TweetsItem, InformationItem
+from sina.items import RelationshipsItem, TweetsItem, InformationItem, CommentItem
 
 
 class MongoDBPipeline(object):
@@ -16,17 +16,18 @@ class MongoDBPipeline(object):
         self.Information = db["Information"]
         self.Tweets = db["Tweets"]
         self.Relationships = db["Relationships"]
+        self.Com = db["Comments"]
 
     def process_item(self, item, spider):
         """ 判断item的类型，并作相应的处理，再入数据库 """
-        if isinstance(item, RelationshipsItem):
-            try:
-                self.Relationships.insert(dict(item))
-            except Exception:
-                pass
-        elif isinstance(item, TweetsItem):
+        if isinstance(item, TweetsItem):
             try:
                 self.Tweets.insert(dict(item))
+            except Exception:
+                pass
+        elif isinstance(item, CommentItem):
+            try:
+                self.Com.insert(dict(item))
             except Exception:
                 pass
         elif isinstance(item, InformationItem):

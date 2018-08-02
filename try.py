@@ -5,33 +5,47 @@ import json
 import base64
 from time import sleep
 import requests
+import pymongo
+    
 
-def get():
+def proxyfetch():
+    client = pymongo.MongoClient("localhost", 27017)
+    db = client["Sina"]
+    proxies = db["proxies"]
+    
+    webapi = 'http://api.xdaili.cn/xdaili-api//privateProxy/applyStaticProxy?spiderId=3f6f240befb04a2f9c9b020aed15a2fd&returnType=2&count=1'
+    while True:
+        proxies.drop()
+        try:
+            r = requests.get(webapi,timeout=120)
+        except Exception as err_info:
+            r = None
+            print(err_info)
 
-    try:
-        r = requests.get("http://api.xdaili.cn/xdaili-api//privateProxy/getDynamicIP/DD20187195466ArkBQ1/03e20a3d1ddb11e79ff07cd30abda612?returnType=2",
-                timeout=120)
-    except Exception as err_info:
-        r = None
-        print(err_info)
-
-    with open('proxies.txt', 'w') as f:
         if r is not None:
-            print(r.status_code)
-            if r.status_code == 200:
-                print(r.content)
-                print(r.json())
-                result = r.json()
-                if result["ERRORCODE"] == "0" and result["RESULT"]:
-                    one = result["RESULT"]
-                    print(one)
-                    print(one["proxyport"])
-                    print(one["wanIp"])
-                    ip = "https://" + one["wanIp"] + ":" + one["proxyport"] + "\n"
-                    f.write(ip)
-    
+            print(r.json())
+            result = r.json()
 
-while(True):             
-    get() 
-    sleep(300)   
-    
+            if result["ERRORCODE"] == "0" and result["RESULT"]:
+                res = result["RESULT"]
+                new_post = []
+                cnt = 0
+                for one in res:
+                    print(one["ip"],end=':')
+                    print(one["port"])
+                    ip = "https://" + one["ip"] + ":" + one["port"]
+                    new_post.append({"proxy":ip, "cnt":cnt})
+                    cnt+=1
+                proxies.insert_many(new_post)       
+                sleep(15)
+            else:
+                sleep(15)
+        else:
+            sleep(15)
+
+
+proxyfetch()
+
+
+
+

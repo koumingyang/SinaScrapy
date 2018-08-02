@@ -12,14 +12,19 @@ import logging
 from logging.handlers import RotatingFileHandler
 from scrapy.downloadermiddlewares.retry import RetryMiddleware
 
+from scrapy.utils.response import response_status_message
+
 logger = logging.getLogger(__name__)
 
 class UserAgentMiddleware(object):
     """ 换User-Agent """
 
     def process_request(self, request, spider):
+
         agent = random.choice(agents)
         request.headers["User-Agent"] = agent
+        logger = logging.getLogger(__name__)
+        logger.warning('UAM process request')
 
 
 class CookiesMiddleware(object):
@@ -30,68 +35,59 @@ class CookiesMiddleware(object):
 
     def process_request(self, request, spider):
         cookie = random.choice(cookies)
+        logger = logging.getLogger(__name__)
+        logger.warning('CoM request')
         request.cookies = cookie
 
-class ResponseNotWorkMiddleware(object):
-    
-    def __init__(self):
+class ResponseNotWorkMiddleware(RetryMiddleware):
+    def process_response(self, request, response, spider):  
+        
         self.client = pymongo.MongoClient("localhost", 27017)
         self.db = self.client["Sina"]
         self.proxies = self.db["proxies"]
 
-    def process_response(self, request, response, spider):  
+        if response.status != 200:  
+            logger = logging.getLogger(__name__)
+            logger.warning('RN process_response...')
+            sleep(10)
+            proxy = self.get_random_proxy()  
+            logger.warning("RN this is request ip:"+proxy)  
+            request.meta['proxy'] = proxy
+            request.dont_filter=True
+            cookie = random.choice(cookies)
+            request.cookies = cookie
+            agent = random.choice(agents)
+            request.headers["User-Agent"] = agent
+            reason = response_status_message(response.status)
+            return self._retry(request, reason, spider) or response
         return response
 
     def process_exception(self, request, exception, spider):
+        
+        self.client = pymongo.MongoClient("localhost", 27017)
+        self.db = self.client["Sina"]
+        self.proxies = self.db["proxies"]
         logger = logging.getLogger(__name__)
         logger.warning('Not Work process_exception...')
         logger.warning(exception)
-
-        if ('User timeout caused' in str(exception)):
-            sleep(20)
-            return request
-
-        self.get()
-        sleep(30)
+        sleep(10)
         proxy = self.get_random_proxy()  
-        print("Not Work this is request ip:"+proxy)  
+        logger.warning("Not Work this is request ip:"+proxy)  
         request.meta['proxy'] = proxy
         request.dont_filter=True
+        cookie = random.choice(cookies)
+        request.cookies = cookie
         logger.warning('Not Work over!')
-        return request
-    
-    def get(self):
-        while(True):
-            try:
-                r = requests.get("http://api.xdaili.cn/xdaili-api//privateProxy/getDynamicIP/DD20187195466ArkBQ1/c711f5747db611e7bcaf7cd30abda612?returnType=2",
-                        timeout=120)
-            except Exception as err_info:
-                r = None
-                print(err_info)
-
-            if r is not None:
-                print(r.status_code)
-                if r.status_code == 200:
-                    print(r.content)
-                    print(r.json())
-                    result = r.json()
-                    if result["ERRORCODE"] == "0" and result["RESULT"]:
-                        one = result["RESULT"]
-                        print(one)
-                        print(one["proxyport"])
-                        print(one["wanIp"])
-                        ip = "https://" + one["wanIp"] + ":" + one["proxyport"]
-                        self.proxies.drop()
-                        self.proxies.insert_one({"proxy": ip})
-                        return
-            sleep(60)
-
+        agent = random.choice(agents)
+        request.headers["User-Agent"] = agent
+        return self._retry(request, exception, spider)
+        
 
     def get_random_proxy(self):  
-        '''随机从文件中读取proxy'''  
         while(True):
-            for proxy in self.proxies.find():
-                return proxy['proxy']
+            seq = random.randint(0,4)
+            if (self.proxies.find_one({'cnt':seq})):
+                return self.proxies.find_one({'cnt':seq})['proxy']
             sleep(1)
         
 
@@ -99,50 +95,29 @@ class ResponseNotWorkMiddleware(object):
 class DynamicProxyMiddleware(object):
 
     def __init__(self):
+        self.maxnumber = 5
         self.client = pymongo.MongoClient("localhost", 27017)
         self.db = self.client["Sina"]
         self.proxies = self.db["proxies"]
-        self.get()
 
-    def get(self):
-        while(True):
-            try:
-                r = requests.get("http://api.xdaili.cn/xdaili-api//privateProxy/getDynamicIP/DD20187195466ArkBQ1/c711f5747db611e7bcaf7cd30abda612?returnType=2",
-                        timeout=120)
-            except Exception as err_info:
-                r = None
-                print(err_info)
-
-            if r is not None:
-                print(r.status_code)
-                if r.status_code == 200:
-                    print(r.content)
-                    print(r.json())
-                    result = r.json()
-                    if result["ERRORCODE"] == "0" and result["RESULT"]:
-                        one = result["RESULT"]
-                        print(one)
-                        print(one["proxyport"])
-                        print(one["wanIp"])
-                        ip = "https://" + one["wanIp"] + ":" + one["proxyport"]
-                        self.proxies.drop()
-                        self.proxies.insert_one({"proxy": ip})
-                        return
-            sleep(60)
 
     def get_random_proxy(self):  
         while(True):
-            for proxy in self.proxies.find():
-                return proxy['proxy']
-            sleep(10)
+            seq = random.randint(0,4)
+            if (self.proxies.find_one({'cnt':seq})):
+                return self.proxies.find_one({'cnt':seq})['proxy']
+            sleep(1)
 
     def process_request(self,request, spider):    
         proxy = self.get_random_proxy()  
-        print("DP this is request ip:"+proxy)  
+        logger = logging.getLogger(__name__)
+        logger.warning("DP this is request ip:"+proxy)  
         request.meta['proxy'] = proxy   
   
   
     def process_response(self, request, response, spider):  
+        logger = logging.getLogger(__name__)
+        logger.warning("DP response")  
         return response  
 
         

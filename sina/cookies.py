@@ -18,8 +18,6 @@ from selenium.webdriver.support import expected_conditions as EC
 或者你也可以把时间间隔调大点。
 """
 WeiBoAccounts = [
-{'username': '18810231801', 'password': 'kmy97226'},
-{'username': '15010863096', 'password': 'kmy972261001'},
 {'username': '00841688839272', 'password': 'cxz7223'},
 {'username': '00841677339592', 'password': 'cxz9291'},
 {'username': '00841218495387', 'password': 'cxz4628'},
